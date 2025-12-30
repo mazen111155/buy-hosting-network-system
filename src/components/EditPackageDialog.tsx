@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,20 +12,40 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import db from '@/lib/shared/kliv-database.js';
 
-interface AddPackageDialogProps {
+interface Package {
+  _row_id: number;
+  name: string;
+  price: number;
+  duration_days: number;
+  speed_limit: string;
+  download_limit: string;
+}
+
+interface EditPackageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  package: Package;
   onSuccess?: () => void;
 }
 
-const AddPackageDialog = ({ open, onOpenChange, onSuccess }: AddPackageDialogProps) => {
+const EditPackageDialog = ({ open, onOpenChange, package: pkg, onSuccess }: EditPackageDialogProps) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState('');
   const [speed, setSpeed] = useState('');
-  const [dataLimit, setDataLimit] = useState('');
+  const [downloadLimit, setDownloadLimit] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (pkg) {
+      setName(pkg.name || '');
+      setPrice(pkg.price?.toString() || '');
+      setDuration(pkg.duration_days?.toString() || '');
+      setSpeed(pkg.speed_limit?.replace(' Mbps', '') || '');
+      setDownloadLimit(pkg.download_limit?.replace(' GB', '') || '');
+    }
+  }, [pkg]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,35 +62,27 @@ const AddPackageDialog = ({ open, onOpenChange, onSuccess }: AddPackageDialogPro
     setIsLoading(true);
     
     try {
-      await db.insert('packages', {
+      await db.update('packages', { _row_id: `eq.${pkg._row_id}` }, {
         name: name,
         name_ar: name,
         price: parseFloat(price),
         duration_days: parseInt(duration),
         speed_limit: speed ? `${speed} Mbps` : null,
-        download_limit: dataLimit ? `${dataLimit} GB` : null,
-        simultaneous_users: 1,
-        is_active: 1,
-        sort_order: 0
+        download_limit: downloadLimit ? `${downloadLimit} GB` : null
       });
       
       toast({
-        title: 'تمت إضافة الباقة',
-        description: `تم إضافة ${name} بنجاح`
+        title: 'تم التحديث',
+        description: `تم تحديث ${name} بنجاح`
       });
       
-      setName('');
-      setPrice('');
-      setDuration('');
-      setSpeed('');
-      setDataLimit('');
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.log('Error adding package:', error);
+      console.log('Error updating package:', error);
       toast({
         title: 'خطأ',
-        description: 'فشل في إضافة الباقة',
+        description: 'فشل في تحديث الباقة',
         variant: 'destructive'
       });
     } finally {
@@ -82,67 +94,70 @@ const AddPackageDialog = ({ open, onOpenChange, onSuccess }: AddPackageDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>إضافة باقة جديدة</DialogTitle>
+          <DialogTitle>تعديل الباقة</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">اسم الباقة</Label>
+            <Label htmlFor="edit-name">اسم الباقة *</Label>
             <Input
-              id="name"
+              id="edit-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="مثال: باقة شهرية"
               required
+              disabled={isLoading}
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">السعر ($)</Label>
+              <Label htmlFor="edit-price">السعر ($) *</Label>
               <Input
-                id="price"
+                id="edit-price"
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="50"
                 required
+                disabled={isLoading}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="duration">المدة (أيام)</Label>
+              <Label htmlFor="edit-duration">المدة (أيام) *</Label>
               <Input
-                id="duration"
+                id="edit-duration"
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="30"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="speed">السرعة (Mbps)</Label>
+              <Label htmlFor="edit-speed">السرعة (Mbps)</Label>
               <Input
-                id="speed"
+                id="edit-speed"
                 type="number"
                 value={speed}
                 onChange={(e) => setSpeed(e.target.value)}
                 placeholder="50"
-                required
+                disabled={isLoading}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="dataLimit">حد البيانات (GB)</Label>
+              <Label htmlFor="edit-downloadLimit">حد التحميل (GB)</Label>
               <Input
-                id="dataLimit"
+                id="edit-downloadLimit"
                 type="number"
-                value={dataLimit}
-                onChange={(e) => setDataLimit(e.target.value)}
+                value={downloadLimit}
+                onChange={(e) => setDownloadLimit(e.target.value)}
                 placeholder="100"
                 disabled={isLoading}
               />
@@ -158,10 +173,10 @@ const AddPackageDialog = ({ open, onOpenChange, onSuccess }: AddPackageDialogPro
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                  جاري الإضافة...
+                  جاري الحفظ...
                 </>
               ) : (
-                'إضافة الباقة'
+                'حفظ التغييرات'
               )}
             </Button>
             <Button 
@@ -179,4 +194,4 @@ const AddPackageDialog = ({ open, onOpenChange, onSuccess }: AddPackageDialogPro
   );
 };
 
-export default AddPackageDialog;
+export default EditPackageDialog;

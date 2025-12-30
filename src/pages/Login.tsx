@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wifi, Eye, EyeOff } from 'lucide-react';
+import { Wifi, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,28 +14,54 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: 'خطأ',
+        description: 'يرجى إدخال البريد الإلكتروني وكلمة المرور',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsLoading(true);
     
-    // Demo login - في النسخة الحقيقية سيتم الاتصال بالـ API
-    setTimeout(() => {
-      if (email && password) {
-        toast({
-          title: 'تم تسجيل الدخول بنجاح',
-          description: 'مرحباً بك في لوحة التحكم'
-        });
-        navigate('/dashboard');
-      } else {
-        toast({
-          title: 'خطأ',
-          description: 'يرجى إدخال البريد الإلكتروني وكلمة المرور',
-          variant: 'destructive'
-        });
+    try {
+      await signIn(email, password);
+      toast({
+        title: 'تم تسجيل الدخول بنجاح',
+        description: 'مرحباً بك في لوحة التحكم'
+      });
+      navigate('/dashboard');
+    } catch (error) {
+      console.log('Login error:', error);
+      let message = 'حدث خطأ أثناء تسجيل الدخول';
+      
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('bad_credentials')) {
+        message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      } else if (errorMessage.includes('account_locked')) {
+        message = 'تم قفل الحساب، يرجى إعادة تعيين كلمة المرور';
       }
+      
+      toast({
+        title: 'فشل تسجيل الدخول',
+        description: message,
+        variant: 'destructive'
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -108,14 +135,21 @@ const Login = () => {
               className="w-full h-12 gradient-primary text-white font-bold btn-glow"
               disabled={isLoading}
             >
-              {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                  جاري تسجيل الدخول...
+                </>
+              ) : (
+                'تسجيل الدخول'
+              )}
             </Button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Help Text */}
           <div className="mt-6 p-4 bg-blue-50 rounded-xl">
             <p className="text-sm text-center text-muted-foreground">
-              <strong>للتجربة:</strong> أدخل أي بريد وكلمة مرور
+              استخدم بيانات حسابك للدخول إلى النظام
             </p>
           </div>
         </div>

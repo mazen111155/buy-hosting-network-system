@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Wifi, LayoutDashboard, Users, Package, 
   CreditCard, BarChart, Settings, LogOut, 
@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,6 +17,22 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: 'تم تسجيل الخروج',
+        description: 'نراك قريباً!'
+      });
+      navigate('/');
+    } catch (error) {
+      console.log('Sign out error:', error);
+    }
+  };
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'لوحة التحكم', path: '/dashboard' },
@@ -71,12 +89,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </nav>
 
         <div className="absolute bottom-0 right-0 left-0 p-4 border-t">
-          <Link to="/">
-            <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50">
-              <LogOut className="w-5 h-5 ml-3" />
-              تسجيل الخروج
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-5 h-5 ml-3" />
+            تسجيل الخروج
+          </Button>
         </div>
       </aside>
 
@@ -108,8 +128,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="hidden sm:block">
-                <p className="font-medium text-sm">المشرف</p>
-                <p className="text-xs text-muted-foreground">admin@mikrotik.com</p>
+                <p className="font-medium text-sm">{user?.firstName || 'المشرف'}</p>
+                <p className="text-xs text-muted-foreground">{user?.email || ''}</p>
               </div>
             </div>
           </div>

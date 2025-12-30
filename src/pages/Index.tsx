@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Wifi, Shield, Zap, Users, Globe, Clock, Download } from 'lucide-react';
+import { Wifi, Shield, Zap, Users, Globe, Clock, Download, CreditCard } from 'lucide-react';
 import HeroSection from '@/components/HeroSection';
 import FeatureCard from '@/components/FeatureCard';
 import StatsSection from '@/components/StatsSection';
@@ -51,13 +51,13 @@ const Index = () => {
             </div>
             <span className="text-xl font-bold gradient-text">مكروتك هوستبت</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="/content/downloads/mikrotik-hotspot-system.zip" download>
+          <div className="flex items-center gap-3">
+            <Link to="/activate">
               <Button variant="outline" className="font-medium gap-2">
-                <Download className="w-4 h-4" />
-                تحميل النظام
+                <CreditCard className="w-4 h-4" />
+                تفعيل كرت
               </Button>
-            </a>
+            </Link>
             <Link to="/login">
               <Button variant="ghost" className="font-medium">
                 تسجيل الدخول
