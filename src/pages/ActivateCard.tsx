@@ -345,9 +345,12 @@ const ActivateCard = () => {
         )}
 
         {/* Footer */}
-        <div className="text-center mt-6">
-          <Link to="/" className="text-white/70 hover:text-white text-sm">
-            الرجوع للصفحة الرئيسية
+        <div className="text-center mt-6 space-y-2">
+          <Link to="/home" className="text-white/70 hover:text-white text-sm block">
+            عن الخدمة
+          </Link>
+          <Link to="/login" className="text-white/50 hover:text-white/70 text-xs block">
+            دخول الإدارة
           </Link>
         </div>
       </div>

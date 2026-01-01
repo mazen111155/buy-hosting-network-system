@@ -25,9 +25,15 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            {/* صفحة تفعيل الكرت هي الصفحة الرئيسية (Captive Portal) */}
+            <Route path="/" element={<ActivateCard />} />
             <Route path="/activate" element={<ActivateCard />} />
+            
+            {/* صفحة الموقع الرئيسية للإدارة */}
+            <Route path="/home" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            
+            {/* لوحة التحكم */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -53,7 +59,7 @@ const App = () => (
                 <Reports />
               </ProtectedRoute>
             } />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<ActivateCard />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
